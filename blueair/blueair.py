@@ -1,16 +1,18 @@
+# pylint: disable=line-too-long
 """This module provides the Blueair class to communicate with the Blueair API."""
+
+from typing import Any, Dict, List, Mapping, Union
 
 import base64
 import logging
 import requests
-
-from typing import Any, Dict, List, Mapping, Union
 from typing_extensions import TypedDict
 
 logger = logging.getLogger(__name__)
 
 # The BlueAir API uses a fixed API key.
 API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJncmFudGVlIjoiYmx1ZWFpciIsImlhdCI6MTQ1MzEyNTYzMiwidmFsaWRpdHkiOi0xLCJqdGkiOiJkNmY3OGE0Yi1iMWNkLTRkZDgtOTA2Yi1kN2JkNzM0MTQ2NzQiLCJwZXJtaXNzaW9ucyI6WyJhbGwiXSwicXVvdGEiOi0xLCJyYXRlTGltaXQiOi0xfQ.CJsfWVzFKKDDA6rWdh-hjVVVE9S3d6Hu9BzXG9htWFw"  # noqa: E501
+DEFAULT_TIMEOUT = 5  # [sec]
 
 MeasurementBundle = TypedDict("MeasurementBundle", {
     "sensors": List[str],
@@ -66,13 +68,14 @@ class BlueAir(object):
         device. It can be stored and reused to avoid requesting it again when
         reinitializing the class at a later time.
         """
-        logger.info(f"GET https://api.blueair.io/v2/user/{self.username}/homehost/")
+        logger.info(
+            "GET https://api.blueair.io/v2/user/%s/homehost/", self.username
+        )
 
         response = requests.get(
             f"https://api.blueair.io/v2/user/{self.username}/homehost/",
-            headers={
-                "X-API-KEY-TOKEN": API_KEY
-            }
+            headers={"X-API-KEY-TOKEN": API_KEY},
+            timeout=DEFAULT_TIMEOUT,
         )
 
         return response.text.replace("\"", "")
@@ -84,14 +87,20 @@ class BlueAir(object):
         The authentication token can be reused to prevent an additional network
         request when initializing the client.
         """
-        logger.info(f"GET https://{self.home_host}/v2/user/{self.username}/login/")
+        logger.info(
+            "GET https://%s/v2/user/%s/login/", self.home_host, self.username
+        )
 
         response = requests.get(
             f"https://{self.home_host}/v2/user/{self.username}/login/",
             headers={
                 "X-API-KEY-TOKEN": API_KEY,
-                "Authorization": "Basic " + base64.b64encode((self.username + ":" + self.password).encode()).decode()
-            }
+                "Authorization": "Basic "
+                + base64.b64encode(
+                    (self.username + ":" + self.password).encode()
+                ).decode(),
+            },
+            timeout=DEFAULT_TIMEOUT,
         )
 
         return response.headers["X-AUTH-TOKEN"]
@@ -102,14 +111,15 @@ class BlueAir(object):
 
         This is a low level function that is used by most of the client API calls.
         """
-        logger.info(f"GET https://{self.home_host}/v2/{path}")
+        logger.info("GET https://%s/v2/%s", self.home_host, path)
 
         return requests.get(
             f"https://{self.home_host}/v2/{path}",
             headers={
                 "X-API-KEY-TOKEN": API_KEY,
-                "X-AUTH-TOKEN": self.auth_token
-            }
+                "X-AUTH-TOKEN": self.auth_token,
+            },
+            timeout=DEFAULT_TIMEOUT,
         ).json()
 
     def get_devices(self) -> List[Dict[str, Any]]:
