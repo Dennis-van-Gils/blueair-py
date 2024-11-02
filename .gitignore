@@ -3,3 +3,5 @@
 /.vscode
 blueair/blueair.db
 blueair/chart.png
+*.db
+*.png
