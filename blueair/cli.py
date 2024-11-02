@@ -85,7 +85,7 @@ def _plot_measurements(database: Database, filename: str) -> None:
     matplotlib.rcParams["timezone"] = zone.key
     pyplot.style.use("bmh")
 
-    fig, axs = pyplot.subplots(4, 1, figsize=(10, 10), constrained_layout=True)  # type: ignore
+    _fig, axs = pyplot.subplots(4, 1, figsize=(10, 10), constrained_layout=True)
 
     axs[0].plot(dataframe["timestamp"], dataframe["pm25"])
     axs[0].set_title("PM 2.5")
