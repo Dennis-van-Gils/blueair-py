@@ -1,8 +1,10 @@
+# pylint: disable=line-too-long
 """This module contains a class that can be used to store and retrieve measurements to/from a SQLite database."""
 
 import sqlite3
 
 from typing import Dict, Optional, Sequence, Union
+
 
 class Database(object):
     """This class provides a wrapper around a SQLite database for storing/retrieving measurements."""
@@ -13,7 +15,8 @@ class Database(object):
         self.db.row_factory = sqlite3.Row  # type: ignore
         self.cursor = self.db.cursor()
 
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS measurements (
                 id INTEGER PRIMARY KEY ASC,
                 timestamp INTEGER NOT NULL UNIQUE,
@@ -24,7 +27,8 @@ class Database(object):
                 voc REAL NOT NULL,
                 all_pollution REAL NOT NULL
             );
-        """)
+        """
+        )
 
         self.db.commit()
 
@@ -38,21 +42,37 @@ class Database(object):
 
         Returns None if there is no such timestamp.
         """
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             SELECT MAX(timestamp) FROM measurements;
-        """)
+        """
+        )
 
         return self.cursor.fetchone()[0]  # type: ignore
 
-    def get_all_measurements(self) -> Sequence[Dict[str, Union[str, int, float]]]:
+    def get_all_measurements(
+        self,
+    ) -> Sequence[Dict[str, Union[str, int, float]]]:
         """Retrieve all stored measurements from the database."""
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             SELECT * FROM measurements ORDER BY timestamp ASC;
-        """)
+        """
+        )
 
         return (dict(row) for row in self.cursor.fetchall())  # type: ignore
 
-    def insert_measurement(self, *, timestamp: int, pm25: float, temperature: float, humidity: float, co2: float, voc: float, all_pollution: float) -> None:
+    def insert_measurement(
+        self,
+        *,
+        timestamp: int,
+        pm25: float,
+        temperature: float,
+        humidity: float,
+        co2: float,
+        voc: float,
+        all_pollution: float
+    ) -> None:
         """
         Insert a new measurement into the database.
 
@@ -60,10 +80,13 @@ class Database(object):
         record to disk. Call `commit` after inserting the last record of a
         batch to save them to disk.
         """
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             INSERT INTO measurements (
                 timestamp, pm25, temperature, humidity, co2, voc, all_pollution
             ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?
             );
-        """, (timestamp, pm25, temperature, humidity, co2, voc, all_pollution))
+        """,
+            (timestamp, pm25, temperature, humidity, co2, voc, all_pollution),
+        )

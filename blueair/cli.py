@@ -20,25 +20,47 @@ from .database import Database
 
 logger = logging.getLogger(__name__)
 
-def _tabularize(it: Sequence[Dict[str, Any]], titles: List[str], field_keys: List[str]) -> None:
+
+def _tabularize(
+    it: Sequence[Dict[str, Any]], titles: List[str], field_keys: List[str]
+) -> None:
     # Get maximum string lengths per dict key
-    grouped = groupby(sorted(chain(*(i.items() for i in it)), key=lambda x: x[0]), lambda x: x[0])
+    grouped = groupby(
+        sorted(chain(*(i.items() for i in it)), key=lambda x: x[0]),
+        lambda x: x[0],
+    )
     lengths = {k: max(len(str(w)) for _, w in v) for k, v in grouped}
 
     title_mapping = dict(zip(field_keys, titles))
     lengths = {k: max(v, len(title_mapping[k])) for k, v in lengths.items()}
 
-    print("  ".join(title.ljust(lengths[field]) for title, field in zip(titles, field_keys)))
+    print(
+        "  ".join(
+            title.ljust(lengths[field])
+            for title, field in zip(titles, field_keys)
+        )
+    )
     print("  ".join("-" * lengths[field] for field in field_keys))
 
     for entry in it:
-        print("  ".join(str(entry[field]).ljust(lengths[field]) for field in field_keys))
+        print(
+            "  ".join(
+                str(entry[field]).ljust(lengths[field]) for field in field_keys
+            )
+        )
 
-def _collect_measurements(blueair: BlueAir, database: Database, device_uuid: str) -> None:
+
+def _collect_measurements(
+    blueair: BlueAir, database: Database, device_uuid: str
+) -> None:
     now = datetime.now(timezone.utc)
-    start_timestamp = database.get_latest_timestamp() or int((now - timedelta(days=10)).timestamp())
+    start_timestamp = database.get_latest_timestamp() or int(
+        (now - timedelta(days=10)).timestamp()
+    )
     end_timestamp = int(now.timestamp())
-    measurements = blueair.get_data_points_between(device_uuid, start_timestamp + 1, end_timestamp)
+    measurements = blueair.get_data_points_between(
+        device_uuid, start_timestamp + 1, end_timestamp
+    )
 
     for measurement in measurements:
         database.insert_measurement(**measurement)
@@ -46,6 +68,7 @@ def _collect_measurements(blueair: BlueAir, database: Database, device_uuid: str
     database.commit()
 
     logger.info("Collected %i new measurements", len(measurements))
+
 
 def _plot_measurements(database: Database, filename: str) -> None:
     measurements = database.get_all_measurements()
@@ -55,7 +78,9 @@ def _plot_measurements(database: Database, filename: str) -> None:
 
     # Create a dataframe for plotting
     dataframe = pd.DataFrame(measurements)
-    dataframe["timestamp"] = pd.to_datetime(dataframe["timestamp"], unit='s', utc=True).dt.tz_convert(zone)
+    dataframe["timestamp"] = pd.to_datetime(
+        dataframe["timestamp"], unit="s", utc=True
+    ).dt.tz_convert(zone)
 
     matplotlib.rcParams["timezone"] = zone.key
     pyplot.style.use("bmh")
@@ -108,26 +133,56 @@ def _plot_measurements(database: Database, filename: str) -> None:
     pyplot.savefig(filename)
     pyplot.show()
 
+
 def run() -> None:
     """Run the Blueair command line client."""
     # Create argument parser
-    parser = argparse.ArgumentParser(description="An example application using the Python BlueAir client that collects and graphs measurements.")
+    parser = argparse.ArgumentParser(
+        description="An example application using the Python BlueAir client that collects and graphs measurements."
+    )
     parser.add_argument("--email", help="The username for the BlueAir account")
-    parser.add_argument("--password", help="The password for the BlueAir acount")
-    parser.add_argument("--list-devices", action="store_true", help="List the available devices for the account and exit")
-    parser.add_argument("--list-attributes", action="store_true", help="List the available attributes for the device and exit")
-    parser.add_argument("--uuid", help="The device UUID to use for collecting measurements")
-    parser.add_argument("--interval", type=int, metavar="N", help="Collect measurements every N seconds")
-    parser.add_argument("--output", default="chart.png", help="The filename to use for the generated chart (defaults to chart.png)")
-    parser.add_argument("--database", default="blueair.db", help="The filename to use for the SQLite database (defaults to blueair.db)")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--password", help="The password for the BlueAir acount"
+    )
+    parser.add_argument(
+        "--list-devices",
+        action="store_true",
+        help="List the available devices for the account and exit",
+    )
+    parser.add_argument(
+        "--list-attributes",
+        action="store_true",
+        help="List the available attributes for the device and exit",
+    )
+    parser.add_argument(
+        "--uuid", help="The device UUID to use for collecting measurements"
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        metavar="N",
+        help="Collect measurements every N seconds",
+    )
+    parser.add_argument(
+        "--output",
+        default="chart.png",
+        help="The filename to use for the generated chart (defaults to chart.png)",
+    )
+    parser.add_argument(
+        "--database",
+        default="blueair.db",
+        help="The filename to use for the SQLite database (defaults to blueair.db)",
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 
     # Configure logger
     coloredlogs.install(
         level=args.verbose and logging.INFO or logging.WARNING,
-        fmt="%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s"
+        fmt="%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s",
     )
 
     if not args.email or not args.password:
@@ -142,7 +197,7 @@ def run() -> None:
         _tabularize(
             devices,
             ["UUID", "User ID", "MAC Address", "Device Name"],
-            ["uuid", "userId", "mac", "name"]
+            ["uuid", "userId", "mac", "name"],
         )
 
         sys.exit()

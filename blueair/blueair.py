@@ -14,12 +14,13 @@ logger = logging.getLogger(__name__)
 API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJncmFudGVlIjoiYmx1ZWFpciIsImlhdCI6MTQ1MzEyNTYzMiwidmFsaWRpdHkiOi0xLCJqdGkiOiJkNmY3OGE0Yi1iMWNkLTRkZDgtOTA2Yi1kN2JkNzM0MTQ2NzQiLCJwZXJtaXNzaW9ucyI6WyJhbGwiXSwicXVvdGEiOi0xLCJyYXRlTGltaXQiOi0xfQ.CJsfWVzFKKDDA6rWdh-hjVVVE9S3d6Hu9BzXG9htWFw"  # noqa: E501
 DEFAULT_TIMEOUT = 5  # [sec]
 
-MeasurementBundle = TypedDict("MeasurementBundle", {
-    "sensors": List[str],
-    "datapoints": List[List[Union[int, float]]]
-})
+MeasurementBundle = TypedDict(
+    "MeasurementBundle",
+    {"sensors": List[str], "datapoints": List[List[Union[int, float]]]},
+)
 
 MeasurementList = List[Mapping[str, Union[int, float]]]
+
 
 def transform_data_points(data: MeasurementBundle) -> MeasurementList:
     """Transform a measurement list response from the Blueair API to a more pythonic data structure."""
@@ -30,12 +31,13 @@ def transform_data_points(data: MeasurementBundle) -> MeasurementList:
         "hum": "humidity",
         "co2": "co2",
         "voc": "voc",
-        "allpollu": "all_pollution"
+        "allpollu": "all_pollution",
     }
 
     keys = [key_mapping[key] for key in data["sensors"]]
 
     return [dict(zip(keys, values)) for values in data["datapoints"]]
+
 
 class BlueAir(object):
     """This class provides API calls to interact with the Blueair API."""
@@ -84,7 +86,7 @@ class BlueAir(object):
             timeout=DEFAULT_TIMEOUT,
         )
 
-        return response.text.replace("\"", "")
+        return response.text.replace('"', "")
 
     def get_auth_token(self) -> str:
         """
@@ -174,7 +176,9 @@ class BlueAir(object):
         return self.api_call(f"device/{device_uuid}/info/")
 
     # Note: refreshes every 5 minutes
-    def get_current_data_point(self, device_uuid: str) -> Mapping[str, Union[int, float]]:
+    def get_current_data_point(
+        self, device_uuid: str
+    ) -> Mapping[str, Union[int, float]]:
         """
         Fetch the most recent data point for the provided device ID.
 
@@ -191,7 +195,9 @@ class BlueAir(object):
         return results[-1]
 
     # Note: refreshes every 5 minutes
-    def get_data_points_since(self, device_uuid: str, seconds_ago: int = 0, sample_period: int = 0) -> MeasurementList:
+    def get_data_points_since(
+        self, device_uuid: str, seconds_ago: int = 0, sample_period: int = 0
+    ) -> MeasurementList:
         """
         Fetch the list of data points between a relative timestamp (in seconds) and the current time.
 
@@ -202,7 +208,9 @@ class BlueAir(object):
         every 5 minutes.  Calling it more often will return the same respone
         from the server and should be avoided to limit server load.
         """
-        data = self.api_call(f"device/{device_uuid}/datapoint/{seconds_ago}/last/{sample_period}/")
+        data = self.api_call(
+            f"device/{device_uuid}/datapoint/{seconds_ago}/last/{sample_period}/"
+        )
 
         results = transform_data_points(data)
 
@@ -217,7 +225,13 @@ class BlueAir(object):
     # to 0 to use the server's default period (300 seconds).  Calling this
     # function more than once per sample period will give the same results, so
     # make sure to throttle these calls to conserve API bandwidth.
-    def get_data_points_between(self, device_uuid: str, start_timestamp: int, end_timestamp: int, sample_period: int = 0) -> MeasurementList:
+    def get_data_points_between(
+        self,
+        device_uuid: str,
+        start_timestamp: int,
+        end_timestamp: int,
+        sample_period: int = 0,
+    ) -> MeasurementList:
         """
         Fetch the list of data points between two timestamps.
 
@@ -231,7 +245,9 @@ class BlueAir(object):
         every 5 minutes.  Calling it more often will return the same respone
         from the server and should be avoided to limit server load.
         """
-        data = self.api_call(f"device/{device_uuid}/datapoint/{start_timestamp}/{end_timestamp}/{sample_period}/")
+        data = self.api_call(
+            f"device/{device_uuid}/datapoint/{start_timestamp}/{end_timestamp}/{sample_period}/"
+        )
 
         results = transform_data_points(data)
 
