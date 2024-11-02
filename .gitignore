@@ -1,1 +1,5 @@
 /docs/_build/
+/blueair/__pycache__
+/.vscode
+blueair/blueair.db
+blueair/chart.png
