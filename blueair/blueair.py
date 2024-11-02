@@ -40,7 +40,13 @@ def transform_data_points(data: MeasurementBundle) -> MeasurementList:
 class BlueAir(object):
     """This class provides API calls to interact with the Blueair API."""
 
-    def __init__(self, username: str, password: str, home_host: str = None, auth_token: str = None) -> None:
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        home_host: Union[str, None] = None,
+        auth_token: Union[str, None] = None,
+    ) -> None:
         """
         Instantiate a new Blueair client with the provided username and password.
 
