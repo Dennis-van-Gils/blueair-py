@@ -1,17 +1,19 @@
+# pylint: disable=line-too-long
 """This module contains the Blueair command line client."""
 
-import argparse
-import coloredlogs  # type: ignore
+import sys
 import logging
-import matplotlib
-import matplotlib.pyplot as pyplot
-import pandas as pd
-import tzlocal
-
 from datetime import datetime, timedelta, timezone
 from itertools import chain, groupby
 from time import sleep
 from typing import Any, Dict, Sequence, List
+
+import argparse
+import coloredlogs
+import matplotlib
+from matplotlib import pyplot
+import pandas as pd
+import tzlocal
 
 from .blueair import BlueAir
 from .database import Database
@@ -43,7 +45,7 @@ def _collect_measurements(blueair: BlueAir, database: Database, device_uuid: str
 
     database.commit()
 
-    logger.info(f"Collected {len(measurements)} new measurements")
+    logger.info("Collected %i new measurements", len(measurements))
 
 def _plot_measurements(database: Database, filename: str) -> None:
     measurements = database.get_all_measurements()
@@ -144,7 +146,7 @@ def run() -> None:
             ["uuid", "userId", "mac", "name"]
         )
 
-        exit()
+        sys.exit()
 
     # Get UUID or fetch from device list if not specified
     uuid = args.uuid
@@ -153,17 +155,20 @@ def run() -> None:
         devices = blueair.get_devices()
         if not devices:
             raise RuntimeError("No devices found")
-        elif len(devices) != 1:
-            raise RuntimeError("Found multiple devices, use --uuid argument to specify which one to use")
-        else:
-            uuid = devices[0]["uuid"]
+
+        if len(devices) != 1:
+            raise RuntimeError(
+                "Found multiple devices, use --uuid argument to specify which one to use"
+            )
+
+        uuid = devices[0]["uuid"]
 
     # Handle attributes list mode
     if args.list_attributes:
         for key, value in blueair.get_attributes(uuid).items():
             print(f"{key}: {value}")
 
-        exit()
+        sys.exit()
 
     # Initialize database session
     database = Database(filename=args.database)
@@ -177,7 +182,7 @@ def run() -> None:
             logger.info("Generating chart")
             _plot_measurements(database, args.output)
 
-            logger.info(f"Waiting {args.interval} seconds")
+            logger.info("Waiting %.0f seconds", args.interval)
             sleep(args.interval)
     else:
         logger.info("Collecting measurements")
