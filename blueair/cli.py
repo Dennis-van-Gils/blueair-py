@@ -51,15 +51,14 @@ def _plot_measurements(database: Database, filename: str) -> None:
     measurements = database.get_all_measurements()
 
     # get the local timezone
-    zone = tzlocal.get_localzone().zone
+    zone = tzlocal.get_localzone()
 
     # Create a dataframe for plotting
     dataframe = pd.DataFrame(measurements)
-    dataframe["timestamp"] = dataframe["timestamp"].apply(lambda timestamp: datetime.utcfromtimestamp(timestamp))
-    dataframe["timestamp"] = dataframe["timestamp"].dt.tz_localize("UTC").dt.tz_convert(zone)  # type: ignore
+    dataframe["timestamp"] = pd.to_datetime(dataframe["timestamp"], unit='s', utc=True).dt.tz_convert(zone)
 
-    matplotlib.rcParams["timezone"] = zone  # type: ignore
-    pyplot.style.use("bmh")  # type: ignore
+    matplotlib.rcParams["timezone"] = zone.key
+    pyplot.style.use("bmh")
 
     fig, axs = pyplot.subplots(4, 1, figsize=(10, 10), constrained_layout=True)  # type: ignore
 
