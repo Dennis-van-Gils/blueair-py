@@ -130,6 +130,21 @@ def _plot_measurements(database: Database, filename: str) -> None:
     axs[3].set_ylabel("%")
     axs[3].margins(x=0.01, y=0.1)
 
+    # Zoom in to the last N days
+    t_end = dataframe["timestamp"][dataframe["timestamp"].last_valid_index()]
+    t_start = t_end - pd.Timedelta("3 day")
+    axs[0].set_xlim(t_start, t_end)
+    max_pm25 = dataframe.loc[
+        (dataframe["timestamp"] >= t_start) & (dataframe["timestamp"] <= t_end),
+        "pm25",
+    ].max()  # type: ignore
+    max_voc = dataframe.loc[
+        (dataframe["timestamp"] >= t_start) & (dataframe["timestamp"] <= t_end),
+        "voc",
+    ].max()  # type: ignore
+    axs[0].set_ylim(0, round((max_pm25 + 10) / 10) * 10)
+    axs[1].set_ylim(0, round((max_voc + 100) / 100) * 100)
+
     pyplot.savefig(filename)
     pyplot.show()
 
